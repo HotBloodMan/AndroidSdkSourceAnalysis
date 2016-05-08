@@ -56,7 +56,36 @@ new DownAsyncTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,"");
 ```java
 AsyncTask.cancel(mayInterruptIfRunning);
 ```
-mayInterruptIfRunning是boolean类型的，注意这里true和false的区别
+mayInterruptIfRunning是boolean类型的(注意这里true和false的区别)，其调用流程：AsyncTask.cancel() -> FutureTask.cancel()。FutureTask.cancel()的源码如下：
+```java
+  public boolean cancel(boolean mayInterruptIfRunning) {
+  	//检测当前状态是否是NEW,如果不是，说明任务已经完成或取消或中断，所以直接返回。
+        if (!(state == NEW &&
+              U.compareAndSwapInt(this, STATE, NEW,
+                  mayInterruptIfRunning ? INTERRUPTING : CANCELLED)))
+            return false;
+        try {    // in case call to interrupt throws exception
+            //如果mayInterruptIfRunning为true的时候，线程就会调用interrupt()方法，抛出异常。
+            if (mayInterruptIfRunning) {
+                try {
+                    Thread t = runner;
+                    if (t != null)
+                    	//调用interrupt方法，状态设置为INTERRUPTING，然后试着中断线程，完成后设置状态为INTERRUPTED
+                        t.interrupt();
+                } finally { // final state
+                    U.putOrderedInt(this, STATE, INTERRUPTED);
+                }
+            }
+        } finally {
+            //通知等待线程的结果（因为FutureTask.get()法获得计算结果的唯一方法，如果计算没有完成，此方法会堵塞直到计算完成）
+            finishCompletion();
+        }
+        return true;
+    }
+
+
+```
+以下是我代码例子中`doInBackground()`中注释的，这里主要是为了强调true和false的区别。
 ```java
  try {
          Thread.sleep(2000);
@@ -123,7 +152,15 @@ mayInterruptIfRunning是boolean类型的，注意这里true和false的区别
         };
     }
 ```
-AsyncTask的实例化是在UI线程中。构造函数初始化了两个成员变量mWorker和mFuture。mWorker为WorkerRunnable类型的匿名内部类实例对象（实现了Callable接口），mFuture为FutureTask类型的匿名内部类实例对象，将mWorker作为mFuture的形参（重写了FutureTask类的done方法）。
+AsyncTask的实例化是在UI线程中。
+```java
+  //@MainThread表示这个动作是在UI线程中完成
+  @MainThread
+    public final AsyncTask<Params, Progress, Result> execute(Params... params) {
+        return executeOnExecutor(sDefaultExecutor, params);
+    }
+```
+构造函数初始化了两个成员变量mWorker和mFuture。mWorker为WorkerRunnable类型的匿名内部类实例对象（实现了Callable接口），mFuture为FutureTask类型的匿名内部类实例对象，将mWorker作为mFuture的形参（重写了FutureTask类的done方法）。
 * WorkerRunnable是一个实现了Callable的抽象类,扩展了Callable多了一个Params参数
 ```java
 private static abstract class WorkerRunnable<Params, Result> implements Callable<Result> 
@@ -132,9 +169,9 @@ private static abstract class WorkerRunnable<Params, Result> implements Callable
 }//java
 ```
 下面讲述下Callable和Runnable的区别。
-1、Callable的接口方法是call，Runnable是run<br>
-2、Callable可以带返回值，Runnable不行,这个结果是Future获取的<br>
-3、Callable可以捕获异常，Runnable不行<br>
+1. Callable的接口方法是call，Runnable是run
+2. Callable可以带返回值，Runnable不行,结果通过Future.get()获取
+3. Callable可以捕获异常，Runnable不行
 ```java
 public class CallableAndFuture {
     public static void main(String[] args) {
@@ -145,8 +182,7 @@ public class CallableAndFuture {
         };
         //那WorkerRunnable的回调方法call肯定是在FutureTask中调用的
         FutureTask<Integer> future = new FutureTask<Integer>(callable)
-      ```java
-      ```);
+      );
         new Thread(future).start();
         try {
             Thread.sleep(5000);// 可能做一些事情
@@ -159,11 +195,22 @@ public class CallableAndFuture {
     }
 }//java
 ```
+FutureTask的构造函数如下，
+```java
+    public FutureTask(Callable<V> callable) {
+        if (callable == null)
+            throw new NullPointerException();
+        //将AsyncTask里面初始化的callable赋值给FutureTask里面的callable，证实了WorkerRunnable的回调方法call肯定是在FutureTask中调用的
+        this.callable = callable;
+        this.state = NEW;       // ensure visibility of callable
+    }
+```
+查看FutureTask类，它实现了接口Runnable
 ```java
 public class FutureTask<V> implements RunnableFuture<V>//java
 实现了RunnableFuture接口
 ```
-FutureTask实现了接口Runnable，它作为Runnable被线程执行，同时将Callable作为构造函数的参数传入，这样组合的好处是，假设有一个很耗时的返回值需要计算，并且这个返回值不是立刻需要的话，就可以使用这个组合，用另一个线程去计算返回值，而当前线程在使用这个返回值之前可以做其它的操作，等到需要这个返回值时，再通过Future得到。FutureTask的run方法要开始回调WorkerRunable的call方法了，call里面调用doInBackground(mParams),终于回到我们后台任务了，调用我们AsyncTask子类的`doInBackground()`,由此可以看出`doInBackground()`是在子线程中执行的，如下图所示
+作为Runnable被线程执行，同时将Callable作为构造函数的参数传入，这样组合的好处是，假设有一个很耗时的返回值需要计算，并且这个返回值不是立刻需要的话，就可以使用这个组合，用另一个线程去计算返回值，而当前线程在使用这个返回值之前可以做其它的操作，等到需要这个返回值时，再通过Future得到。FutureTask的run方法要开始回调WorkerRunable的call方法了，call里面调用doInBackground(mParams),终于回到我们后台任务了，调用我们AsyncTask子类的`doInBackground()`,由此可以看出`doInBackground()`是在子线程中执行的，如下图所示
 ![](https://github.com/white37/AndroidSdkSourceAnalysis/blob/master/images/FutureTask(run).png)
 
 ### 3.2、核心方法
@@ -214,6 +261,7 @@ public final AsyncTask<Params, Progress, Result> executeOnExecutor(Executor exec
 * PENDING 待执行状态。当AsyncTask被创建时，就进入了PENDING状态。
 * RUNNING 运行状态。当调用executeOnExecutor，就进入了RUNNING状态。
 * FINISHED 结束状态。当AsyncTask完成(用户cancel()或任务执行完毕)时，就进入了FINISHED状态。
+
 3、SerialExecutor的execute方法
 ```java
   private static class SerialExecutor implements Executor {
@@ -252,7 +300,7 @@ public final AsyncTask<Params, Progress, Result> executeOnExecutor(Executor exec
         }
     }//java
 ```
-exec.execute(mFuture)执行时，SerialExecutor将FutureTask作为参数执行execute方法。在execute方法中，假设FutureTask插入进了两个以上的任务队列到mTasks中，第一次过来mActive==null，通过`mTasks.poll()`取出一个任务丢给线程池运行，线程池执行r.run，其实就是执行FutureTask的run方法，因为传递进来的r参数就是mFuture。等到上一个线程执完r.run()完之后，这里是通过一个try-finally代码块，并在finally中调用了scheduleNext()方法，保证无论发生什么情况，scheduleNext()都会取出下一个任务执行。接着因为mActive不为空了，不会再执行``scheduleNext()`，由此可知道这是一个串行的执行过程，同一时刻只会有一个线程正在执行，其余的均处于等待状态。
+exec.execute(mFuture)执行时，SerialExecutor将FutureTask作为参数执行execute方法。在execute方法中，假设FutureTask插入进了两个以上的任务队列到mTasks中，第一次过来mActive==null，通过`mTasks.poll()`取出一个任务丢给线程池运行，线程池执行r.run，其实就是执行FutureTask的run方法，因为传递进来的r参数就是mFuture。等到上一个线程执完r.run()完之后，这里是通过一个try-finally代码块，并在finally中调用了scheduleNext()方法，保证无论发生什么情况，scheduleNext()都会取出下一个任务执行。接着因为mActive不为空了，不会再执行``scheduleNext()`，由于存在一个循环队列，每个 Runnable 被执行的时候，都进入去队列，然后在执行完后出队，才会进入下一个 Runnable 的执行流程。由此可知道这是一个串行的执行过程，同一时刻只会有一个线程正在执行，其余的均处于等待状态。
 
 
 ```java
@@ -268,7 +316,7 @@ mWorker = new WorkerRunnable<Params, Result>() {
             }
         };
 ```
-可以看到如果回调了`call()`方法，就会调用了`doInBackground(mParams)`方法，这都是在子线程中执行的。执行完后，将结果通过`postResult(result)`发送出去。
+上文中提到调用`call()`的流程：SerialExecutor.execute() -> FutureTask.run() -> WorkerRunnable.call()  如果回调了`call()`方法，就会调用了`doInBackground(mParams)`方法，这都是在子线程中执行的。执行完后，将结果通过`postResult(result)`发送出去。
 
 4、AsyncTask的postResult方法
 ```java
@@ -345,8 +393,8 @@ private void finish(Result result) {
 ![](https://github.com/white37/AndroidSdkSourceAnalysis/blob/master/images/AsyncTask%E6%B5%81%E7%A8%8B%E5%9B%BE.png)
 
 ## 四、AsyncTask需要注意的坑
-* AsyncTask的对象必须在主线程中实例化，execute方法也要在主线程调用
-* AsyncTask任务只能被执行一次，即只能调用一次execute方法，多次调用时将会抛异常
+* AsyncTask的对象必须在主线程中实例化，execute方法也要在主线程调用（查看上面的3.1小节）
+* 同一个AsyncTask任务只能被执行一次，即只能调用一次execute方法，多次调用时将会抛异常（查看3.2里面的第二小节）
 * cancel()方法无法直接中断子线程，只是更改了中断的标志位。控制异步任务执行结束后不会回调onPostExecute()。正确的取消异步任务要cancel()方法+doInbacground()做判断跳出循环
 * AsyncTask在Activit通常作为匿名的内部类来使用，如果 AsyncTask 中的异步任务在 Activity 退出时还没执行完或者阻塞了，那么这个保持的外部的 Activity 实例得不到释放（内部类保持隐式外部类的实例的引用），最后导致会引起OOM，解决办法是：在 AsyncTask 使用弱引用外部实例，或者保证在 Activity 退出时，所有的 AsyncTask 已执行完成或被取消
 * 会产生阻塞问题，尤其是单任务顺序执行的情况下，一个任务执行时间过长会阻塞其他任务的执行
@@ -357,7 +405,7 @@ AsyncTasks should ideally be used for short operations (a few seconds at the mos
 [有兴趣的可以看这篇文章](http://www.jianshu.com/p/b283b5b704e5)
 
 ## 六、总结
- 尽管AsyncTask现在已经很少使用了，但是他的一些设计思路可以借鉴到我们的框架中。比如我们的代码中尽量设计灵活一些，就像AysnTask里面存在串行、并行的操作一样，提供用户同的api，让用户在不同的场景下选择不同的业务逻辑处理。
+ 尽管AsyncTask现在已经很少使用了，但是它的一些设计思路可以借鉴到我们的框架中。比如我们的代码中尽量设计灵活一些，就像AysnTask里面存在串行、并行的操作一样，提供用户同的api，让用户在不同的场景下选择不同的业务逻辑处理。
  
 
 
