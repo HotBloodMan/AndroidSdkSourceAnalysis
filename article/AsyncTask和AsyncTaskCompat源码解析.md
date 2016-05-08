@@ -393,7 +393,7 @@ private void finish(Result result) {
 ![](https://github.com/white37/AndroidSdkSourceAnalysis/blob/master/images/AsyncTask%E6%B5%81%E7%A8%8B%E5%9B%BE.png)
 
 ## 四、AsyncTask需要注意的坑
-* AsyncTask的对象必须在主线程中实例化，execute方法也要在主线程调用（(#31-AsyncTask构造函数)）
+* AsyncTask的对象必须在主线程中实例化，execute方法也要在主线程调用(### 3.1节-AsyncTask构造函数)
 * 同一个AsyncTask任务只能被执行一次，即只能调用一次execute方法，多次调用时将会抛异常（查看3.2里面的第二小节）
 * cancel()方法无法直接中断子线程，只是更改了中断的标志位。控制异步任务执行结束后不会回调onPostExecute()。正确的取消异步任务要cancel()方法+doInbacground()做判断跳出循环
 * AsyncTask在Activit通常作为匿名的内部类来使用，如果 AsyncTask 中的异步任务在 Activity 退出时还没执行完或者阻塞了，那么这个保持的外部的 Activity 实例得不到释放（内部类保持隐式外部类的实例的引用），最后导致会引起OOM，解决办法是：在 AsyncTask 使用弱引用外部实例，或者保证在 Activity 退出时，所有的 AsyncTask 已执行完成或被取消
