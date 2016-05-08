@@ -169,9 +169,9 @@ private static abstract class WorkerRunnable<Params, Result> implements Callable
 }//java
 ```
 下面讲述下Callable和Runnable的区别。
-1. Callable的接口方法是call，Runnable是run
-2. Callable可以带返回值，Runnable不行,结果通过Future.get()获取
-3. Callable可以捕获异常，Runnable不行
+* Callable的接口方法是call，Runnable是run
+* Callable可以带返回值，Runnable不行,结果通过Future.get()获取
+* Callable可以捕获异常，Runnable不行
 ```java
 public class CallableAndFuture {
     public static void main(String[] args) {
