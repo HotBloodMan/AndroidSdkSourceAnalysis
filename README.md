@@ -16,9 +16,17 @@ android sdk 源码解析
 ##已发布文章
 Class | 分析者 | 校对者 | 版本 | 发布时间
 :------------- | :------------- | :------------- | :------------- | :------------- 
-[BottomSheets源码解析](https://github.com/android-cjj/SourceAnalysis) | [android-cjj](https://github.com/android-cjj/)| [轻微](https://github.com/zzz40500)|design-23.2.0 | 2016/4/20
-[ViewDragHelper源码解析](https://github.com/LittleFriendsGroup/AndroidSdkSourceAnalysis/blob/master/artcle/ViewDragHelper%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md) | [达庆凯](https://github.com/Skykai521)| [android-cjj](https://github.com/android-cjj/)|support-v4-21.0 | 2016/4/21|
-[AsyncTask/AsyncTaskCompat源码解析](https://github.com/white37/AndroidSdkSourceAnalysis) | [android-cjj](https://github.com/white37)| [轻微](https://github.com/android-cjj/)|android3.0以后| 2016/5/7
+[Binder源码解析](https://github.com/xdtianyu/SourceAnalysis/blob/master/Binder%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md) | [xdtianyu](https://github.com/xdtianyu) |[xdtianyu](https://github.com/xdtianyu) |android api 23| 2016/5/8
+[TextView源码解析](https://github.com/7heaven/AndroidSdkSourceAnalysis/blob/master/article/textview%E6%BA%90%E7%A2%BC%E8%A7%A3%E6%9E%90.md) | [7heaven](https://github.com/7heaven) |[7heaven](https://github.com/7heaven) |android api 23| 2016/5/8
+[CooirdinatorLayout源码解析](https://github.com/desmond1121/AndroidSdkSourceAnalysis/blob/master/article/CooirdinatorLayout%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md) | [Desmond Yao](https://github.com/desmond1121) |[轻微](https://github.com/zzz40500) | support-v7-23.2.1| 2016/5/8
+[Scroller源码解析](https://github.com/Skykai521/AndroidSdkSourceAnalysis/blob/master/article/Scroller%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md) | [Skykai521](https://github.com/Skykai521) |[android-cjj](https://github.com/android-cjj/) | android api 23| 2016/5/8
+[SwipeRefreshLayout 源码解析](https://github.com/hanks-zyh/SwipeRefreshLayout/blob/master/README.md) | [hanks-zyh](https://github.com/hanks-zyh) |[android-cjj](https://github.com/android-cjj/) | support-v7-23.2.1| 2016/5/8
+[FloatingActionButton源码解析](https://github.com/Rowandjj/my_awesome_blog/blob/master/fab_anlysis/README.md) | [Rowandjj](https://github.com/Rowandjj) |[CaMnter](https://github.com/CaMnter) | support-v7-23.2.1| 2016/5/8
+[AsyncTask源码解析](https://github.com/white37/AndroidSdkSourceAnalysis/blob/master/article/AsyncTask%E5%92%8CAsyncTaskCompat%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90.md) | [white37](https://github.com/white37) |[android-cjj](https://github.com/android-cjj/) | android api 23 | 2016/5/8
+[SearchView源码解析](https://github.com/nukc/SearchViewAnalysis/blob/master/README.md) | [Nukc](https://github.com/nukc) |[android-cjj](https://github.com/android-cjj/) | support-v7-23.2.1 | 2016/5/7
+[LruCache源码解析](https://github.com/LittleFriendsGroup/AndroidSdkSourceAnalysis/blob/master/article/LruCache%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90.md) | [CaMnter](https://github.com/CaMnter)| [alafighting](https://github.com/alafighting)|support-v4-23.2.1 | 2016/4/24 
+[ViewDragHelper源码解析](https://github.com/LittleFriendsGroup/AndroidSdkSourceAnalysis/blob/master/article/ViewDragHelper%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md) | [达庆凯](https://github.com/Skykai521)| [android-cjj](https://github.com/android-cjj/)|support-v4-21.0 | 2016/4/21   
+[BottomSheets源码解析](https://github.com/android-cjj/SourceAnalysis) | [android-cjj](https://github.com/android-cjj/)| [轻微](https://github.com/zzz40500)|design-23.2.0 | 2016/4/20  
 
 ## 已认领文章
 
